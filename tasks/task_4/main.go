@@ -5,7 +5,7 @@ import (
 )
 
 func main() {
-	text := " a b c d e f g "
+	text := "abc"
 	fmt.Println(textFromTheEnd(text))
 
 }
@@ -13,9 +13,8 @@ func main() {
 func textFromTheEnd(text string) string {
 	stringByRunes := []rune(text)
 	for i := 0; i < len(stringByRunes)/2; i++ {
-		buffer := stringByRunes[i]
-		stringByRunes[i] = stringByRunes[len(stringByRunes)-1-i]
-		stringByRunes[len(stringByRunes)-1-i] = buffer
+		stringByRunes[i], stringByRunes[len(stringByRunes)-1-i] = stringByRunes[len(stringByRunes)-1-i], stringByRunes[i]
+
 	}
 	return string(stringByRunes)
 }
