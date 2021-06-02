@@ -13,11 +13,11 @@ func main() {
 
 func textFromTheEnd(text string) string {
 	var stringBuffer strings.Builder
-	var stringByRunes []rune
+	stringByRunes := []rune(text)
 	for _, letter := range text {
 		stringByRunes = append(stringByRunes, letter)
 	}
-	for i := (len(stringByRunes) - 1); i >= 0; i-- {
+	for i := len(stringByRunes) - 1; i >= 0; i-- {
 		stringBuffer.WriteRune(stringByRunes[i])
 	}
 	return stringBuffer.String()
