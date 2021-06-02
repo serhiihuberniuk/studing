@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 )
 
 func main() {
@@ -12,10 +11,11 @@ func main() {
 }
 
 func textFromTheEnd(text string) string {
-	var stringBuffer strings.Builder
 	stringByRunes := []rune(text)
-	for i := len(stringByRunes) - 1; i >= 0; i-- {
-		stringBuffer.WriteRune(stringByRunes[i])
+	for i := 0; i < len(stringByRunes)/2; i++ {
+		buffer := stringByRunes[i]
+		stringByRunes[i] = stringByRunes[len(stringByRunes)-1-i]
+		stringByRunes[len(stringByRunes)-1-i] = buffer
 	}
-	return stringBuffer.String()
+	return string(stringByRunes)
 }
