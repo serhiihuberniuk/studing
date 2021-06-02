@@ -2,23 +2,19 @@ package main
 
 import (
 	"fmt"
-	"strings"
 )
 
 func main() {
-	text := " a b c d e f g "
+	text := "abc"
 	fmt.Println(textFromTheEnd(text))
 
 }
 
 func textFromTheEnd(text string) string {
-	var stringBuffer strings.Builder
-	var stringByRunes []rune
-	for _, letter := range text {
-		stringByRunes = append(stringByRunes, letter)
+	stringByRunes := []rune(text)
+	for i := 0; i < len(stringByRunes)/2; i++ {
+		stringByRunes[i], stringByRunes[len(stringByRunes)-1-i] = stringByRunes[len(stringByRunes)-1-i], stringByRunes[i]
+
 	}
-	for i := (len(stringByRunes) - 1); i >= 0; i-- {
-		stringBuffer.WriteRune(stringByRunes[i])
-	}
-	return stringBuffer.String()
+	return string(stringByRunes)
 }
