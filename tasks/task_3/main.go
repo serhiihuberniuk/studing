@@ -1,23 +1,29 @@
 package main
 
-import "fmt"
+import (
+	"bytes"
+	"fmt"
+)
 
-func deleteGaps(text string) {
+func deleteGaps(text string) string {
 	var previousLetter bool
-	for i := 0; i < len(text); i++ {
-		currentLetter := text[i] == ' '
+	var byteBuffer bytes.Buffer
+	for _, letter := range text {
+		currentLetter := letter == ' '
 		if currentLetter {
 			if !previousLetter {
-				fmt.Printf("%c", text[i])
+				byteBuffer.WriteRune(letter)
 			}
 		} else {
-			fmt.Printf("%c", text[i])
+			byteBuffer.WriteRune(letter)
 		}
 		previousLetter = currentLetter
 	}
+	return byteBuffer.String()
+
 }
 func main() {
-	text := "   a b  c                     d e  "
-	deleteGaps(text)
+	text := "a b  c                     d e  "
+	fmt.Println(deleteGaps(text))
 
 }
