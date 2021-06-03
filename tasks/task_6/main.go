@@ -9,31 +9,35 @@ type rectangle struct {
 	a, b float64
 }
 
-type square struct {
-	a float64
-}
-type triangle struct {
-	a, b, c float64
-}
-
 func (r rectangle) peri() float64 {
 	return r.a*2 + r.b*2
-}
-func (s square) peri() float64 {
-	return s.a * 4
-}
-func (t triangle) peri() float64 {
-	return t.a + t.b + t.c
 }
 func (r rectangle) square() float64 {
 	return r.a * r.b
 }
-func (t triangle) square() float64 {
-	halfP := t.peri() / 2
-	return math.Sqrt(halfP * (halfP - t.a) * (halfP - t.b) * (halfP - t.c))
+
+type square struct {
+	a float64
+}
+
+func (s square) peri() float64 {
+	return s.a * 4
 }
 func (s square) square() float64 {
 	return s.a * s.a
+}
+
+type triangle struct {
+	a, b, c float64
+}
+
+func (t triangle) peri() float64 {
+	return t.a + t.b + t.c
+}
+
+func (t triangle) square() float64 {
+	halfP := t.peri() / 2
+	return math.Sqrt(halfP * (halfP - t.a) * (halfP - t.b) * (halfP - t.c))
 }
 
 func totalSquare(r rectangle, t triangle, s square) float64 {
