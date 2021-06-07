@@ -2,7 +2,7 @@ package main
 
 import "fmt"
 
-func build(arr [][]int) {
+func printArr(arr [][]int) {
 	for _, v := range arr {
 		fmt.Println(v)
 	}
@@ -16,13 +16,14 @@ func nextPosition(arr [][]int, x, y, n int) {
 	if y < 0 || y >= len(arr[0]) {
 		return
 	}
-	if arr[x][y] == 0 || arr[x][y] > n {
-
-		arr[x][y] = n + 1
-		n = arr[x][y]
-	} else {
+	if arr[x][y] == 1 {
 		return
 	}
+	if arr[x][y] < n && arr[x][y] != 0 {
+		return
+	}
+	arr[x][y] = n + 1
+	n = arr[x][y]
 
 	nextPosition(arr, x, y+1, n)
 	nextPosition(arr, x+1, y, n)
@@ -30,30 +31,63 @@ func nextPosition(arr [][]int, x, y, n int) {
 	nextPosition(arr, x-1, y, n)
 
 }
-func wayBack(arr [][]int, x, y, n int) {
-	if x < 0 || x >= len(arr) {
-		return
-	}
-	if y < 0 || y >= len(arr[0]) {
-		return
-	}
-	if arr[x][y] == n {
-		arr[x][y] = -1
-		n = n - 1
-		if n == 1 {
-			return
+
+func backWay(arr [][]int, x, y, n int) {
+	n = arr[x][y]
+	arr[x][y] = -1
+	for {
+
+		for {
+
+			a := x
+			b := y + 1
+			if (a >= 0 && a < len(arr)) && (b >= 0 && b < len(arr[0])) {
+				if arr[a][b] == n-1 {
+					x = a
+					y = b
+					arr[x][y] = -1
+					n = n - 1
+					break
+				}
+			}
+			a = x + 1
+			b = y
+			if (a >= 0 && a < len(arr)) && (b >= 0 && b < len(arr[0])) {
+				if arr[a][b] == n-1 {
+					x = a
+					y = b
+					arr[x][y] = -1
+					n = n - 1
+					break
+				}
+			}
+			a = x
+			b = y - 1
+			if (a >= 0 && a < len(arr)) && (b >= 0 && b < len(arr[0])) {
+				if arr[a][b] == n-1 {
+					x = a
+					y = b
+					arr[x][y] = -1
+					n = n - 1
+					break
+				}
+			}
+			a = x - 1
+			b = y
+			if (a >= 0 && a < len(arr)) && (b >= 0 && b < len(arr[0])) {
+				if arr[a][b] == n-1 {
+					x = a
+					y = b
+					arr[x][y] = -1
+					n = n - 1
+					break
+				}
+			}
 		}
-	} else {
-		return
+		if x == 0 && y == 0 {
+			break
+		}
 	}
-
-	wayBack(arr, x+1, y, n)
-	wayBack(arr, x, y+1, n)
-	wayBack(arr, x-1, y, n)
-	wayBack(arr, x, y-1, n)
-
-}
-func theWay(arr [][]int) {
 	var way [][]int
 	for _, row := range arr {
 		way = append(way, row)
@@ -65,8 +99,7 @@ func theWay(arr [][]int) {
 			}
 		}
 	}
-	build(way)
-
+	printArr(way)
 }
 
 func main() {
@@ -78,7 +111,7 @@ func main() {
 		{1, 1, 0, 1, 1, 1, 1, 1, 1, 1},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 	}
-	build(matrix)
+	printArr(matrix)
 	n := 1
 	nextPosition(matrix, x, y, n)
 	x = len(matrix) - 1
@@ -87,8 +120,7 @@ func main() {
 	if matrix[x][y] > 1 {
 		fmt.Println("Here is the Way")
 		fmt.Println("It takes ", n, "steps")
-		wayBack(matrix, x, y, n)
-		theWay(matrix)
+		backWay(matrix, x, y, n)
 	} else {
 		fmt.Println("No Way")
 	}
