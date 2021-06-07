@@ -1,10 +1,24 @@
 package main
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
-func printArr(arr [][]int) {
-	for _, v := range arr {
-		fmt.Println(v)
+func printArr(arr [][]int, wayIsFound bool) {
+	for _, row := range arr {
+		fmt.Println()
+		for _, cell := range row {
+			if wayIsFound {
+				if cell != -1 {
+					fmt.Print(1, " ")
+				} else {
+					fmt.Print(0, " ")
+				}
+			} else {
+				fmt.Print(cell, " ")
+			}
+		}
 	}
 	fmt.Println()
 }
@@ -31,75 +45,33 @@ func nextPosition(arr [][]int, x, y, n int) {
 	nextPosition(arr, x-1, y, n)
 
 }
-
-func backWay(arr [][]int, x, y, n int) {
-	n = arr[x][y]
-	arr[x][y] = -1
+func backWay(arr [][]int) ([][]int, error) {
+	x, y := len(arr)-1, len(arr[0])-1
+	n := arr[x][y]
 	for {
-
-		for {
-
-			a := x
-			b := y + 1
-			if (a >= 0 && a < len(arr)) && (b >= 0 && b < len(arr[0])) {
-				if arr[a][b] == n-1 {
-					x = a
-					y = b
-					arr[x][y] = -1
-					n = n - 1
-					break
-				}
-			}
-			a = x + 1
-			b = y
-			if (a >= 0 && a < len(arr)) && (b >= 0 && b < len(arr[0])) {
-				if arr[a][b] == n-1 {
-					x = a
-					y = b
-					arr[x][y] = -1
-					n = n - 1
-					break
-				}
-			}
-			a = x
-			b = y - 1
-			if (a >= 0 && a < len(arr)) && (b >= 0 && b < len(arr[0])) {
-				if arr[a][b] == n-1 {
-					x = a
-					y = b
-					arr[x][y] = -1
-					n = n - 1
-					break
-				}
-			}
-			a = x - 1
-			b = y
-			if (a >= 0 && a < len(arr)) && (b >= 0 && b < len(arr[0])) {
-				if arr[a][b] == n-1 {
-					x = a
-					y = b
-					arr[x][y] = -1
-					n = n - 1
-					break
-				}
-			}
-		}
+		arr[x][y] = -1
 		if x == 0 && y == 0 {
-			break
+			return arr, nil
 		}
-	}
-	var way [][]int
-	for _, row := range arr {
-		way = append(way, row)
-		for j, cell := range row {
-			if cell == -1 {
-				row[j] = 0
-			} else {
-				row[j] = 1
-			}
+		if y+1 < len(arr[0]) && arr[x][y+1] == n-1 {
+			y++
+			n--
+		} else if y-1 >= 0 && arr[x][y-1] == n-1 {
+			y--
+			n--
+		} else if x-1 >= 0 && arr[x-1][y] == n-1 {
+			x--
+			n--
+		} else if x+1 < len(arr) && arr[x+1][y] == n-1 {
+			y++
+			n--
+		} else {
+			var err error = errors.New("invalid array")
+			return nil, err
 		}
+
 	}
-	printArr(way)
+
 }
 
 func main() {
@@ -111,16 +83,18 @@ func main() {
 		{1, 1, 0, 1, 1, 1, 1, 1, 1, 1},
 		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 	}
-	printArr(matrix)
+	printArr(matrix, false)
 	n := 1
 	nextPosition(matrix, x, y, n)
-	x = len(matrix) - 1
-	y = len(matrix[0]) - 1
-	n = matrix[x][y]
+
 	if matrix[x][y] > 1 {
-		fmt.Println("Here is the Way")
-		fmt.Println("It takes ", n, "steps")
-		backWay(matrix, x, y, n)
+		matrix, err := backWay(matrix)
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Println("Here is the Way")
+			printArr(matrix, true)
+		}
 	} else {
 		fmt.Println("No Way")
 	}
