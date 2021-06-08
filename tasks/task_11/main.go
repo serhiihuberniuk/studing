@@ -14,8 +14,8 @@ func addZeros(ctx context.Context, in chan string, out chan string) {
 		select {
 		case <-ctx.Done():
 			return
-		default:
-			s := <-in
+		case s := <-in:
+
 			s = s + "000"
 			out <- s
 		}
@@ -27,8 +27,7 @@ func convertToInt(ctx context.Context, in chan string, out chan int) {
 		select {
 		case <-ctx.Done():
 			return
-		default:
-			s := <-in
+		case s := <-in:
 			i, err := strconv.Atoi(s)
 			if err == nil {
 				out <- i
@@ -43,8 +42,7 @@ func convertToString(ctx context.Context, in chan int, out chan string) {
 		select {
 		case <-ctx.Done():
 			return
-		default:
-			i := <-in
+		case i := <-in:
 			s := strconv.Itoa(i)
 			out <- s
 		}
@@ -57,7 +55,7 @@ func main() {
 
 	setupGracefulShutdown(cancel)
 
-	stringArray := []string{"90", "23", "30", "123", "34", "4452", "23", "123", "000", "12", "34"}
+	stringArray := []string{"90", "23", "hh", "123", "34", "4452", "23", "123", "000", "12", "34"}
 	ch := make(chan string)
 	ch1 := make(chan string)
 	ch2 := make(chan int)
@@ -72,8 +70,7 @@ func main() {
 			select {
 			case <-ctx.Done():
 				return
-			default:
-				ch <- v
+			case ch <- v:
 			}
 		}
 	}()
@@ -82,8 +79,8 @@ func main() {
 			select {
 			case <-ctx.Done():
 				return
-			default:
-				fmt.Println(<-ch3)
+			case result := <-ch3:
+				fmt.Println(result)
 			}
 		}
 	}()
