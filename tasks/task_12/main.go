@@ -28,16 +28,13 @@ func printArray(arr []int, p printer) {
 
 		go func() {
 			newArr := make([]int, 0, 2)
-
 			for i := 0; i < 5; i++ {
-
 				v, ok := <-srcChan
 				if ok == false {
 					break
 				}
 				newArr = append(newArr, v)
 			}
-
 			p.Print(newArr)
 			wg.Done()
 		}()
