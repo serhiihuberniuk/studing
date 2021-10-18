@@ -12,16 +12,20 @@ func NewFinder() *Finder {
 }
 
 func (f *Finder) FindDuplicates(_ context.Context, list []string) ([]string, error) {
-	listMap := make(map[string]int)
-	for _, s := range list {
-		listMap[s]++
-	}
-
+	listMap := make(map[string]bool)
 	var result []string
-	for key, v := range listMap {
-		if v > 1 {
-			result = append(result, key)
+	for _, s := range list {
+		moreThenOnce, ok := listMap[s]
+		if ok {
+			if moreThenOnce != true {
+				result = append(result, s)
+
+			}
+
+			listMap[s] = true
+			continue
 		}
+		listMap[s] = false
 	}
 
 	return result, nil

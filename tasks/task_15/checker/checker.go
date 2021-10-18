@@ -3,7 +3,6 @@ package checker
 import (
 	"context"
 	"fmt"
-	"os"
 )
 
 type DirectoryChecker struct {
@@ -12,7 +11,7 @@ type DirectoryChecker struct {
 }
 
 type scanner interface {
-	ScanRecursively(ctx context.Context, path string) ([]os.DirEntry, error)
+	ScanRecursively(ctx context.Context, path string) ([]string, error)
 }
 
 type finder interface {
@@ -27,19 +26,14 @@ func NewDirectoryChecker(s scanner, f finder) *DirectoryChecker {
 }
 
 func (dc *DirectoryChecker) CheckDirectoryForDuplicates(ctx context.Context, path string) ([]string, error) {
-	files, err := dc.scanner.ScanRecursively(ctx, path)
+	fileNames, err := dc.scanner.ScanRecursively(ctx, path)
 	if err != nil {
 		return nil, fmt.Errorf("error while scanning directory: %w", err)
 	}
-	if len(files) == 0 {
+	if len(fileNames) == 0 {
 		fmt.Println("directory is empty")
 
 		return nil, nil
-	}
-
-	var fileNames []string
-	for _, file := range files {
-		fileNames = append(fileNames, file.Name())
 	}
 
 	duplicates, err := dc.finder.FindDuplicates(ctx, fileNames)
