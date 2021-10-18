@@ -1,35 +1,47 @@
 package main
 
 import (
+	"context"
+	"errors"
+	"io"
 	"log"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"studing/tasks/task_14/client/getter"
+	"studing/tasks/task_14/client/handler"
 	"studing/tasks/task_14/client/scanner"
-	"studing/tasks/task_14/client/sender"
 )
 
 func main() {
-	conn, err := net.Dial("tcp", "127.0.0.1:8081")
+	ctx, cancel := context.WithCancel(context.Background())
+
+	dialer := net.Dialer{}
+	conn, err := dialer.DialContext(ctx, "tcp", "127.0.0.1:8081")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer conn.Close()
 
-	s := scanner.NewScanner()
-	sdr := sender.NewSender(conn, s)
-	g := getter.NewGetter(conn)
+	ts := scanner.NewTerminalScanner()
+	h := handler.NewSender(conn, ts)
 
 	go func() {
 		for {
-			if err := sdr.SendStringToCheck(); err != nil {
-				log.Printf("error while sending request: %v\n", err)
-			}
-			if err := g.GetResponse(); err != nil {
-				log.Printf("error while getting response: %v\n", err)
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				if err := h.Validate(ctx); err != nil {
+					if errors.Is(err, io.EOF) {
+						log.Printf("connection is closed by server: %v\n", err)
+
+						return
+					}
+
+					log.Println(err)
+				}
 			}
 		}
 	}()
@@ -38,4 +50,5 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
 	<-quit
+	cancel()
 }
