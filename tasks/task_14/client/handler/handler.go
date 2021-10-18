@@ -3,7 +3,6 @@ package handler
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net"
 	"time"
@@ -16,7 +15,7 @@ type Handler struct {
 	scanner scanner
 }
 
-func NewSender(conn net.Conn, s scanner) *Handler {
+func New(conn net.Conn, s scanner) *Handler {
 	return &Handler{
 		conn:    conn,
 		scanner: s,
@@ -27,7 +26,7 @@ type scanner interface {
 	Scan(ctx context.Context) (string, error)
 }
 
-func (h *Handler) Validate(ctx context.Context) error {
+func (h *Handler) Handle(ctx context.Context) error {
 	str, err := h.scanner.Scan(ctx)
 	if err != nil {
 		return fmt.Errorf("error while scanning: %w", err)
@@ -37,9 +36,9 @@ func (h *Handler) Validate(ctx context.Context) error {
 		Text: str,
 	}
 
-	message, err := json.Marshal(requestMessage)
+	message, err := requestMessage.ToBytes()
 	if err != nil {
-		return fmt.Errorf("error while marshalling request: %w", err)
+		return fmt.Errorf("error while transforming message to bytes: %w", err)
 	}
 
 	if err = h.conn.SetWriteDeadline(time.Now().Add(time.Second * 1)); err != nil {
@@ -61,8 +60,8 @@ func (h *Handler) Validate(ctx context.Context) error {
 	}
 
 	responseMessage := &models.ResponseMessage{}
-	if err = json.Unmarshal(data, responseMessage); err != nil {
-		return fmt.Errorf("error while unmarshalling responce: %w", err)
+	if err = responseMessage.FromBytes(data); err != nil {
+		return fmt.Errorf("error while transforming message from bytes: %w", err)
 	}
 
 	if !responseMessage.Success {

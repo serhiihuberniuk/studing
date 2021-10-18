@@ -3,7 +3,6 @@ package handler
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -51,12 +50,12 @@ func (h *Handler) Validate(ctx context.Context) error {
 	}
 
 	requestMessage := &models.RequestMessage{}
-	if err := json.Unmarshal(data, requestMessage); err != nil {
+	if err := requestMessage.FromBytes(data); err != nil {
 		if err := h.writeResponse(false, "invalid request"); err != nil {
 			return fmt.Errorf("error while writing response: %w", err)
 		}
 
-		return fmt.Errorf("error while unmarshalling request: %w", err)
+		return fmt.Errorf("error while transforming message from bytes: %w", err)
 	}
 
 	if err := h.validator.Validate(ctx, requestMessage.Text); err != nil {
@@ -80,9 +79,9 @@ func (h *Handler) writeResponse(success bool, text string) error {
 		Text:    text,
 	}
 
-	message, err := json.Marshal(responseMessage)
+	message, err := responseMessage.ToBytes()
 	if err != nil {
-		return fmt.Errorf("error while marshlling message: %w", err)
+		return fmt.Errorf("error while transforming message to bytes: %w", err)
 	}
 
 	if err = h.conn.SetWriteDeadline(time.Now().Add(time.Second * 1)); err != nil {

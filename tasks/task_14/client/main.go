@@ -25,7 +25,7 @@ func main() {
 	defer conn.Close()
 
 	ts := scanner.NewTerminalScanner()
-	h := handler.NewSender(conn, ts)
+	h := handler.New(conn, ts)
 
 	go func() {
 		for {
@@ -33,7 +33,7 @@ func main() {
 			case <-ctx.Done():
 				return
 			default:
-				if err := h.Validate(ctx); err != nil {
+				if err := h.Handle(ctx); err != nil {
 					if errors.Is(err, io.EOF) {
 						log.Printf("connection is closed by server: %v\n", err)
 
