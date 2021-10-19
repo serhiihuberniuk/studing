@@ -30,8 +30,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if duplicates == nil {
+	if len(duplicates) != 0 {
+		fmt.Println(duplicates)
+	} else {
 		fmt.Println("no duplicates occurred")
 	}
-	fmt.Println(duplicates)
 }

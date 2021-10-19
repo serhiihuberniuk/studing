@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 )
 
 type DirectoryScanner struct {
@@ -13,8 +14,8 @@ func NewDirectoryScanner() *DirectoryScanner {
 	return &DirectoryScanner{}
 }
 
-func (ds *DirectoryScanner) ScanRecursively(ctx context.Context, path string) ([]string, error) {
-	files, err := os.ReadDir(path)
+func (ds *DirectoryScanner) ScanRecursively(ctx context.Context, pathToDirectory string) ([]string, error) {
+	files, err := os.ReadDir(pathToDirectory)
 	if err != nil {
 		return nil, fmt.Errorf("error while reading directory: %w", err)
 	}
@@ -22,8 +23,7 @@ func (ds *DirectoryScanner) ScanRecursively(ctx context.Context, path string) ([
 	var fileNames []string
 	for _, file := range files {
 		if file.IsDir() {
-			path = path + string(os.PathSeparator)
-			fileNamesInChild, err := ds.ScanRecursively(ctx, path+file.Name())
+			fileNamesInChild, err := ds.ScanRecursively(ctx, path.Join(pathToDirectory, file.Name()))
 			if err != nil {
 				return nil, fmt.Errorf("error while scanning directory: %w", err)
 			}
