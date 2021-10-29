@@ -3,6 +3,7 @@ package parser
 import (
 	"context"
 	"fmt"
+	"io"
 
 	"github.com/xuri/excelize/v2"
 )
@@ -14,8 +15,8 @@ func NewExcelParser() *ExcelParser {
 	return &ExcelParser{}
 }
 
-func (p *ExcelParser) Parse(_ context.Context, filename string) (map[string][][]string, error) {
-	f, err := excelize.OpenFile(filename)
+func (p *ExcelParser) Parse(_ context.Context, reader io.Reader) (map[string][][]string, error) {
+	f, err := excelize.OpenReader(reader)
 	if err != nil {
 		return nil, fmt.Errorf("error occured while opening excel file: %w", err)
 	}

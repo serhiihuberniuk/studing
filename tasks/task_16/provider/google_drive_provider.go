@@ -5,8 +5,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
-	"os"
 
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/drive/v2"
@@ -72,10 +72,10 @@ func (p *GoogleDriveProvider) GetExcelFilesNames(_ context.Context) ([]string, e
 	return excelFiles, nil
 }
 
-func (p *GoogleDriveProvider) DownloadFile(_ context.Context, name string, downloadTo *os.File) error {
+func (p *GoogleDriveProvider) ReadFile(_ context.Context, name string) (io.Reader, func(), error) {
 	list, err := p.getFilesList()
 	if err != nil {
-		return fmt.Errorf("error while getting list of files from google drive: %w", err)
+		return nil, nil, fmt.Errorf("error while getting list of files from google drive: %w", err)
 	}
 
 	var fileToDownload *drive.File
@@ -86,19 +86,19 @@ func (p *GoogleDriveProvider) DownloadFile(_ context.Context, name string, downl
 	}
 
 	if fileToDownload == nil {
-		return errors.New("cannot find file with such name")
+		return nil, nil, errors.New("cannot find file with such name")
 	}
 
 	w, err := p.srv.Files.Get(fileToDownload.Id).Download()
 	if err != nil {
-		return fmt.Errorf("error while downloading file: %w", err)
-	}
-	defer w.Body.Close()
-
-	_, err = bufio.NewReader(w.Body).WriteTo(downloadTo)
-	if err != nil {
-		return fmt.Errorf("error while writing to destination file: %w", err)
+		return nil, nil, fmt.Errorf("error while downloading file: %w", err)
 	}
 
-	return nil
+	reader := bufio.NewReader(w.Body)
+
+	closeFn := func() {
+		w.Body.Close()
+	}
+
+	return reader, closeFn, nil
 }

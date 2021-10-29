@@ -3,6 +3,7 @@ package printer
 import (
 	"context"
 	"fmt"
+	"io"
 )
 
 type ExcelPrinter struct {
@@ -16,11 +17,11 @@ func NewExcelPrinter(p parser) *ExcelPrinter {
 }
 
 type parser interface {
-	Parse(ctx context.Context, fileName string) (map[string][][]string, error)
+	Parse(ctx context.Context, reader io.Reader) (map[string][][]string, error)
 }
 
-func (p *ExcelPrinter) PrintExcelFile(ctx context.Context, fileName string) error {
-	excelMap, err := p.parser.Parse(ctx, fileName)
+func (p *ExcelPrinter) PrintExcelFile(ctx context.Context, reader io.Reader) error {
+	excelMap, err := p.parser.Parse(ctx, reader)
 	if err != nil {
 		return fmt.Errorf("error while parsing excel: %w", err)
 	}

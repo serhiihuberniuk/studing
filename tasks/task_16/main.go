@@ -9,7 +9,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 
 	"studing/tasks/task_16/configs"
 	"studing/tasks/task_16/parser"
@@ -46,26 +45,16 @@ func main() {
 	fmt.Println("Enter name of file you want to read: ")
 	fileName := scanner.ScanTerminal()
 
-	tempFileName := config.DownloadPath + fileName
-	tempFile, err := os.Create(tempFileName)
+	f, closeFn, err := googleDriveProvider.ReadFile(ctx, fileName)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer func() {
-		if err = os.Remove(tempFileName); err != nil {
-			log.Fatal(err)
-		}
-	}()
-
-	err = googleDriveProvider.DownloadFile(ctx, fileName, tempFile)
-	if err != nil {
-		log.Fatal(err)
-	}
+	defer closeFn()
 
 	myParser := parser.NewExcelParser()
 	myPrinter := printer.NewExcelPrinter(myParser)
 
-	if err := myPrinter.PrintExcelFile(ctx, tempFileName); err != nil {
+	if err := myPrinter.PrintExcelFile(ctx, f); err != nil {
 		log.Fatal(err)
 	}
 }
