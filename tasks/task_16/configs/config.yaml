@@ -1,0 +1,3 @@
+credentials_file: "./tasks/task_16/provider/credentials.json"
+token_file: "./tasks/task_16/provider/token.json"
+download_path: "./tasks/task_16/tmp/"
