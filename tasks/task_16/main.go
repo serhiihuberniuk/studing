@@ -7,13 +7,13 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"studing/tasks/task_16/configs"
-	"studing/tasks/task_16/parser"
 	"studing/tasks/task_16/printer"
-	"studing/tasks/task_16/provider"
+	"studing/tasks/task_16/provider/google_provider"
+	"studing/tasks/task_16/service"
+
 	"studing/tasks/task_16/scanner"
 )
 
@@ -25,36 +25,26 @@ func main() {
 		log.Fatal(err)
 	}
 
-	googleDriveProvider, err := provider.NewGoogleDriveProvider(ctx, config)
+	googleProvider, err := google_provider.NewGoogleProvider(ctx, config)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	excelFiles, err := googleDriveProvider.GetExcelFilesNames(ctx)
+	driveProvider, err := google_provider.NewGoogleDriveProvider(ctx, googleProvider)
 	if err != nil {
 		log.Fatal(err)
 	}
-	if len(excelFiles) == 0 {
-		log.Fatal("no excel files found")
-	}
 
-	for _, fileName := range excelFiles {
-		fmt.Println(fileName)
-	}
-
-	fmt.Println("Enter name of file you want to read: ")
-	fileName := scanner.ScanTerminal()
-
-	f, closeFn, err := googleDriveProvider.ReadFile(ctx, fileName)
+	sheetProvider, err := google_provider.NewGoogleSheetsProvider(ctx, googleProvider)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer closeFn()
 
-	myParser := parser.NewExcelParser()
-	myPrinter := printer.NewExcelPrinter(myParser)
+	p := printer.NewExcelPrinter(sheetProvider)
+	s := scanner.NewTerminalScanner()
+	myService := service.New(s, p)
 
-	if err := myPrinter.PrintExcelFile(ctx, f); err != nil {
+	if err := myService.OpenExcelFile(ctx, driveProvider); err != nil {
 		log.Fatal(err)
 	}
 }

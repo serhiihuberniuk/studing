@@ -1,4 +1,4 @@
-package provider
+package google_provider
 
 import (
 	"context"

@@ -10,7 +10,6 @@ import (
 type Config struct {
 	CredentialsFile string `yaml:"credentials_file"`
 	TokenFile       string `yaml:"token_file"`
-	DownloadPath    string `yaml:"download_path"`
 }
 
 func NewConfig(pathConfig string) (*Config, error) {

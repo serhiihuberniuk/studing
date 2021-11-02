@@ -3,7 +3,8 @@ package printer
 import (
 	"context"
 	"fmt"
-	"io"
+
+	"studing/tasks/task_16/models"
 )
 
 type ExcelPrinter struct {
@@ -17,56 +18,63 @@ func NewExcelPrinter(p parser) *ExcelPrinter {
 }
 
 type parser interface {
-	Parse(ctx context.Context, reader io.Reader) (map[string][][]string, error)
+	Parse(ctx context.Context, excelFile *models.ExcelFile) (*models.ExcelFile, error)
 }
 
-func (p *ExcelPrinter) PrintExcelFile(ctx context.Context, reader io.Reader) error {
-	excelMap, err := p.parser.Parse(ctx, reader)
+func (p *ExcelPrinter) Print(ctx context.Context, excelFile *models.ExcelFile) error {
+
+	excelFile, err := p.parser.Parse(ctx, excelFile)
 	if err != nil {
-		return fmt.Errorf("error while parsing excel: %w", err)
+		return fmt.Errorf("error while parsing excel file: %w", err)
 	}
 
-	for sheet, rows := range excelMap {
-		err := p.printSheet(ctx, sheet, rows)
+	for _, sheet := range excelFile.Sheets {
+		err := p.PrintSheet(sheet)
 		if err != nil {
-			return fmt.Errorf("error while printing file: %w", err)
+			return fmt.Errorf("error while printing sheet: %w", err)
 		}
 	}
 
 	return nil
 }
 
-func (p *ExcelPrinter) printSheet(_ context.Context, name string, rows [][]string) error {
+func (p *ExcelPrinter) PrintSheet(sheet *models.Sheet) error {
 	var maxCellLen int
-	var maxCellCount int
-	for _, row := range rows {
-		if len(row) > maxCellCount {
-			maxCellCount = len(row)
+	var maxCellsCount int
+	for _, row := range sheet.Rows {
+		if len(row.Cells) > maxCellsCount {
+			maxCellsCount = len(row.Cells)
 		}
-		for _, cell := range row {
-			if len(cell) > maxCellLen {
-				maxCellLen = len(cell)
+
+		for _, cell := range row.Cells {
+			if len(cell.Value) > maxCellLen {
+				maxCellLen = len(cell.Value)
 			}
 		}
 	}
 
-	fmt.Println(name)
-	for _, row := range rows {
-		if len(row) < maxCellCount {
-			row = append(row, make([]string, maxCellCount-len(row))...)
+	fmt.Println(sheet.Name)
+
+	for _, row := range sheet.Rows {
+		if len(row.Cells) < maxCellsCount {
+			row.Cells = append(row.Cells, make([]*models.Cell, maxCellsCount-len(row.Cells))...)
 		}
 
-		printLinesDivider(maxCellCount*(maxCellLen+1)+1, "=")
+		printLinesDivider(maxCellsCount*(maxCellLen+1)+1, "=")
 		fmt.Println()
 
-		for i, cell := range row {
+		for i, cell := range row.Cells {
 			if i == 0 {
 				fmt.Print("|")
 			}
+			if cell == nil {
+				cell = &models.Cell{
+					Value: "",
+				}
+			}
+			fmt.Print(cell.Value)
 
-			fmt.Print(cell)
-
-			for i := 0; i < (maxCellLen - len([]rune(cell))); i++ {
+			for i := 0; i < (maxCellLen - len([]rune(cell.Value))); i++ {
 				fmt.Print(" ")
 			}
 
@@ -76,7 +84,7 @@ func (p *ExcelPrinter) printSheet(_ context.Context, name string, rows [][]strin
 		fmt.Println()
 	}
 
-	printLinesDivider(maxCellCount*(maxCellLen+1)+1, "=")
+	printLinesDivider(maxCellsCount*(maxCellLen+1)+1, "=")
 	fmt.Println()
 
 	return nil
