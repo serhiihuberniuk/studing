@@ -9,7 +9,6 @@ import (
 	"context"
 	"log"
 
-	"studing/tasks/task_16/configs"
 	"studing/tasks/task_16/printer"
 	"studing/tasks/task_16/provider/google_provider"
 	"studing/tasks/task_16/service"
@@ -20,31 +19,16 @@ import (
 func main() {
 	ctx := context.Background()
 
-	config, err := configs.NewConfig("./tasks/task_16/configs/config.yaml")
+	googleProvider, err := google_provider.New(ctx, "./tasks/task_16/provider/google_provider/config.yaml")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	googleProvider, err := google_provider.NewGoogleProvider(ctx, config)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	driveProvider, err := google_provider.NewGoogleDriveProvider(ctx, googleProvider)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	sheetProvider, err := google_provider.NewGoogleSheetsProvider(ctx, googleProvider)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	p := printer.NewExcelPrinter(sheetProvider)
+	p := printer.NewExcelPrinter()
 	s := scanner.NewTerminalScanner()
-	myService := service.New(s, p)
+	myService := service.New(s, googleProvider.GoogleSheetsProvider, p)
 
-	if err := myService.OpenExcelFile(ctx, driveProvider); err != nil {
+	if err := myService.OpenExcelFile(ctx, googleProvider.GoogleDriveProvider); err != nil {
 		log.Fatal(err)
 	}
 }

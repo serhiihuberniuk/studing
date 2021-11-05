@@ -8,28 +8,15 @@ import (
 )
 
 type ExcelPrinter struct {
-	parser parser
 }
 
-func NewExcelPrinter(p parser) *ExcelPrinter {
-	return &ExcelPrinter{
-		parser: p,
-	}
+func NewExcelPrinter() *ExcelPrinter {
+	return &ExcelPrinter{}
 }
 
-type parser interface {
-	Parse(ctx context.Context, excelFile *models.ExcelFile) (*models.ExcelFile, error)
-}
-
-func (p *ExcelPrinter) Print(ctx context.Context, excelFile *models.ExcelFile) error {
-
-	excelFile, err := p.parser.Parse(ctx, excelFile)
-	if err != nil {
-		return fmt.Errorf("error while parsing excel file: %w", err)
-	}
-
+func (p *ExcelPrinter) Print(_ context.Context, excelFile *models.ExcelFile) error {
 	for _, sheet := range excelFile.Sheets {
-		err := p.PrintSheet(sheet)
+		err := p.printSheet(sheet)
 		if err != nil {
 			return fmt.Errorf("error while printing sheet: %w", err)
 		}
@@ -38,7 +25,7 @@ func (p *ExcelPrinter) Print(ctx context.Context, excelFile *models.ExcelFile) e
 	return nil
 }
 
-func (p *ExcelPrinter) PrintSheet(sheet *models.Sheet) error {
+func (p *ExcelPrinter) printSheet(sheet models.Sheet) error {
 	var maxCellLen int
 	var maxCellsCount int
 	for _, row := range sheet.Rows {
@@ -57,7 +44,7 @@ func (p *ExcelPrinter) PrintSheet(sheet *models.Sheet) error {
 
 	for _, row := range sheet.Rows {
 		if len(row.Cells) < maxCellsCount {
-			row.Cells = append(row.Cells, make([]*models.Cell, maxCellsCount-len(row.Cells))...)
+			row.Cells = append(row.Cells, make([]models.Cell, maxCellsCount-len(row.Cells))...)
 		}
 
 		printLinesDivider(maxCellsCount*(maxCellLen+1)+1, "=")
@@ -67,11 +54,7 @@ func (p *ExcelPrinter) PrintSheet(sheet *models.Sheet) error {
 			if i == 0 {
 				fmt.Print("|")
 			}
-			if cell == nil {
-				cell = &models.Cell{
-					Value: "",
-				}
-			}
+
 			fmt.Print(cell.Value)
 
 			for i := 0; i < (maxCellLen - len([]rune(cell.Value))); i++ {

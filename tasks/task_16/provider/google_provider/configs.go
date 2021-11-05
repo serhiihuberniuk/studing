@@ -1,4 +1,4 @@
-package configs
+package google_provider
 
 import (
 	"fmt"
@@ -9,10 +9,9 @@ import (
 
 type Config struct {
 	CredentialsFile string `yaml:"credentials_file"`
-	TokenFile       string `yaml:"token_file"`
 }
 
-func NewConfig(pathConfig string) (*Config, error) {
+func ReadConfig(pathConfig string) (*Config, error) {
 	config := &Config{}
 
 	file, err := os.Open(pathConfig)
@@ -21,7 +20,7 @@ func NewConfig(pathConfig string) (*Config, error) {
 	}
 	defer file.Close()
 
-	if err := yaml.NewDecoder(file).Decode(&config); err != nil {
+	if err := yaml.NewDecoder(file).Decode(config); err != nil {
 		return nil, fmt.Errorf("error while decoding config file: %w", err)
 	}
 

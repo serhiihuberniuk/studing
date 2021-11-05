@@ -3,35 +3,31 @@ package google_provider
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"net/http"
-
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/drive/v2"
-	"studing/tasks/task_16/configs"
 )
 
 type GoogleProvider struct {
-	client *http.Client
+	GoogleDriveProvider  *GoogleDriveProvider
+	GoogleSheetsProvider *GoogleSheetsProvider
 }
 
-func NewGoogleProvider(ctx context.Context, c *configs.Config) (*GoogleProvider, error) {
-	b, err := ioutil.ReadFile(c.CredentialsFile)
+func New(ctx context.Context, pathToConfig string) (*GoogleProvider, error) {
+	c, err := ReadConfig(pathToConfig)
 	if err != nil {
-		return nil, fmt.Errorf("error while reading credential JSON file: %w", err)
+		return nil, fmt.Errorf("error while reading configs: %w", err)
 	}
 
-	authConfig, err := google.ConfigFromJSON(b, drive.DriveScope)
+	drive, err := NewGoogleDriveProvider(ctx, c.CredentialsFile)
 	if err != nil {
-		return nil, fmt.Errorf("error while constructing configs: %w", err)
+		return nil, fmt.Errorf("error while creating drive provider: %w", err)
 	}
 
-	client, err := getClient(ctx, authConfig, c.TokenFile)
+	sheet, err := NewGoogleSheetsProvider(ctx, c.CredentialsFile)
 	if err != nil {
-		return nil, fmt.Errorf("error while getting client: %w", err)
+		return nil, fmt.Errorf("error while creating sheet proider: %w", err)
 	}
 
 	return &GoogleProvider{
-		client: client,
+		GoogleSheetsProvider: sheet,
+		GoogleDriveProvider:  drive,
 	}, nil
 }

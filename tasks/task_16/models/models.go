@@ -1,18 +1,19 @@
 package models
 
 type ExcelFile struct {
-	Name   string
-	ID     string
-	Sheets []*Sheet
+	Name        string
+	ID          string
+	NeedConvert bool
+	Sheets      []Sheet
 }
 
 type Sheet struct {
 	Name string
-	Rows []*Row
+	Rows []Row
 }
 
 type Row struct {
-	Cells []*Cell
+	Cells []Cell
 }
 
 type Cell struct {
