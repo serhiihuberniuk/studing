@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"studing/tasks/task_16/models"
 )
@@ -28,8 +27,7 @@ type printer interface {
 
 type source interface {
 	GetExcelFiles(ctx context.Context) ([]*models.ExcelFile, error)
-	Convert(ctx context.Context, excelFile *models.ExcelFile) error
-	Delete(ctx context.Context, excelFile *models.ExcelFile) error
+	Convert(ctx context.Context, excelFile *models.ExcelFile) (func(), error)
 }
 
 type scanner interface {
@@ -37,7 +35,7 @@ type scanner interface {
 }
 
 type parser interface {
-	Parse(ctx context.Context, excelFile *models.ExcelFile) error
+	Parse(ctx context.Context, excelFile *models.ExcelFile) ([]models.Sheet, error)
 }
 
 func (s *Service) OpenExcelFile(ctx context.Context, source source) error {
@@ -52,22 +50,18 @@ func (s *Service) OpenExcelFile(ctx context.Context, source source) error {
 		return nil
 	}
 
-	file, err := s.selectFile(ctx, files, source)
+	file, deleteFunc, err := s.selectFile(ctx, files, source)
 	if err != nil {
 		return fmt.Errorf("error while selecting file: %w", err)
 	}
-	if file.NeedConvert {
-		defer func() {
-			if err := source.Delete(ctx, file); err != nil {
-				log.Println(fmt.Errorf("error while deleting file: %w", err).Error())
-			}
-		}()
-	}
+	defer deleteFunc()
 
-	if err = s.parser.Parse(ctx, file); err != nil {
+	sheets, err := s.parser.Parse(ctx, file)
+	if err != nil {
 		return fmt.Errorf("error while parsing file: %w", err)
 	}
 
+	file.Sheets = sheets
 	if err = s.printer.Print(ctx, file); err != nil {
 		return fmt.Errorf("error while printing file: %w", err)
 	}
@@ -75,7 +69,7 @@ func (s *Service) OpenExcelFile(ctx context.Context, source source) error {
 	return nil
 }
 
-func (s *Service) selectFile(ctx context.Context, files []*models.ExcelFile, source source) (*models.ExcelFile, error) {
+func (s *Service) selectFile(ctx context.Context, files []*models.ExcelFile, source source) (*models.ExcelFile, func(), error) {
 	for _, file := range files {
 		fmt.Println(file.Name)
 	}
@@ -83,7 +77,7 @@ func (s *Service) selectFile(ctx context.Context, files []*models.ExcelFile, sou
 	fmt.Println("Enter name of file you want to read: ")
 	fileName, err := s.scanner.Scan(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("error while scanning: %w", err)
+		return nil, nil, fmt.Errorf("error while scanning: %w", err)
 	}
 
 	var fileToOpen *models.ExcelFile
@@ -95,14 +89,16 @@ func (s *Service) selectFile(ctx context.Context, files []*models.ExcelFile, sou
 	}
 
 	if fileToOpen == nil {
-		return nil, models.ErrNotFound
+		return nil, nil, models.ErrNotFound
 	}
 
+	deleteFunc := func() {}
 	if fileToOpen.NeedConvert {
-		if err := source.Convert(ctx, fileToOpen); err != nil {
-			return nil, fmt.Errorf("error while converting file: %w", err)
+		deleteFunc, err = source.Convert(ctx, fileToOpen)
+		if err != nil {
+			return nil, nil, fmt.Errorf("error while converting file: %w", err)
 		}
 	}
 
-	return fileToOpen, nil
+	return fileToOpen, deleteFunc, nil
 }

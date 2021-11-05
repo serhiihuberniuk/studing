@@ -3,6 +3,7 @@ package google_provider
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"google.golang.org/api/drive/v3"
 	"google.golang.org/api/option"
@@ -65,10 +66,10 @@ func (p *GoogleDriveProvider) GetExcelFiles(ctx context.Context) ([]*models.Exce
 	return excelFiles, nil
 }
 
-func (p *GoogleDriveProvider) Convert(ctx context.Context, file *models.ExcelFile) error {
+func (p *GoogleDriveProvider) Convert(ctx context.Context, file *models.ExcelFile) (func(), error) {
 	w, err := p.srv.Files.Get(file.ID).Context(ctx).Download()
 	if err != nil {
-		return fmt.Errorf("error while getting file: %w", err)
+		return nil, fmt.Errorf("error while getting file: %w", err)
 	}
 	defer w.Body.Close()
 
@@ -79,19 +80,16 @@ func (p *GoogleDriveProvider) Convert(ctx context.Context, file *models.ExcelFil
 
 	f, err := p.srv.Files.Create(fileMetadata).Media(w.Body).Context(ctx).Do()
 	if err != nil {
-		return fmt.Errorf("error while creating file: %w", err)
+		return nil, fmt.Errorf("error while creating file: %w", err)
 	}
 
 	file.ID = f.Id
 
-	return nil
-
-}
-
-func (p *GoogleDriveProvider) Delete(ctx context.Context, file *models.ExcelFile) error {
-	if err := p.srv.Files.Delete(file.ID).Context(ctx).Do(); err != nil {
-		return fmt.Errorf("error while deleting file: %w", err)
+	deleteFunc := func() {
+		if err := p.srv.Files.Delete(file.ID).Context(ctx).Do(); err != nil {
+			log.Println(fmt.Errorf("error while deleting file: %w", err).Error())
+		}
 	}
 
-	return nil
+	return deleteFunc, nil
 }

@@ -24,26 +24,27 @@ func NewGoogleSheetsProvider(ctx context.Context, credentialsFile string) (*Goog
 	}, nil
 }
 
-func (p *GoogleSheetsProvider) Parse(ctx context.Context, excelFile *models.ExcelFile) error {
+func (p *GoogleSheetsProvider) Parse(ctx context.Context, excelFile *models.ExcelFile) ([]models.Sheet, error) {
 	s, err := p.srv.Spreadsheets.Get(excelFile.ID).Context(ctx).Do()
 	if err != nil {
-		return fmt.Errorf("error while getting sheets: %w", err)
+		return nil, fmt.Errorf("error while getting sheets: %w", err)
 	}
 
+	parsedSheets := make([]models.Sheet, 0, len(s.Sheets))
 	for _, v := range s.Sheets {
 		sheet := models.Sheet{Name: v.Properties.Title}
 
 		vr, err := p.srv.Spreadsheets.Values.Get(excelFile.ID, sheet.Name).Context(ctx).Do()
 		if err != nil {
-			return fmt.Errorf("error while getting values from sheet: %w", err)
+			return nil, fmt.Errorf("error while getting values from sheet: %w", err)
 		}
 
 		p.parseSheet(vr.Values, &sheet)
 
-		excelFile.Sheets = append(excelFile.Sheets, sheet)
+		parsedSheets = append(parsedSheets, sheet)
 	}
 
-	return nil
+	return parsedSheets, nil
 }
 
 func (p *GoogleSheetsProvider) parseSheet(rows [][]interface{}, mySheet *models.Sheet) {
